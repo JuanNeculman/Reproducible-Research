@@ -1,0 +1,107 @@
+---
+title: "Assignament 1 Reproducible Research"
+author: "Juan NeculmC!n"
+date: "19-02-2022"
+output: html_document
+---
+
+#Introduction
+This assignment makes use of data from a personal activity monitoring device. This device collects data at 5 minute intervals throughout the day. The data consists of two months of data from an anonymous individual collected during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.
+
+This document presents the results from Project Assignment 1 in the Coursera course Reproducible Research, written in a single R markdown document that can be processed by knitr and transformed into an HTML file.
+
+#Loading and preprocessing the data
+
+```{r}
+library("ggplot2") #For the Plots
+library(readr) #Loading Data
+library(tidyverse) #pipa
+
+```
+
+```{r}
+library(readr)
+activity <- read_csv("activity.csv")
+View(activity)
+```
+
+
+## put the date 
+```{r}
+activity$date <- as.Date(activity$date) #the date as date
+str(activity)
+```
+
+## View the sumatory 
+```{r}
+sum(is.na(activity$steps)) #got the sum
+```
+
+#What is mean total number of steps taken per day?
+## First remove the NA
+```{r}
+activity <- activity[which(!is.na(activity$steps)),] #bye Na
+str(activity)
+
+```
+
+##The number of steps taken is measured in timeslots, 5-minute intervals, so in order to compute the total ##number of steps taken for each day we will aggregate the data by day.
+```{r}
+perday <- tapply(activity$steps, activity$date, sum) #prepare for see the distribution
+
+```
+
+##Lets make the histogram and look the distribution
+```{r}
+hist(perday,10, col="lightgreen", main = "Total number of steps taken per day", xlab = "")
+
+
+```
+
+# Summary! 
+```{r}
+summary(perday) #look at median and mean
+```
+
+#Time series plot of the average number of steps taken
+##Take the means for the plot
+```{r}
+interval <- activity %>%
+  filter(!is.na(steps)) %>%
+  group_by(interval) %>%
+  summarize(steps = mean(steps))
+```
+
+## And the plot
+```{r}
+ggplot(interval, aes(x=interval, y=steps)) +
+  geom_line(color = "firebrick") 
+```
+
+#Difference between weekday/weekend 
+```{r}
+activity <- mutate(activity, weektype = ifelse(weekdays(activity$date) == "Saturday" | weekdays(activity$date) == "Sunday", "weekend", "weekday"))
+activity$weektype <- as.factor(activity$weektype)
+head(activity)
+```
+
+
+# Avarage steps in 5 mins intervals
+
+```{r}
+activity <- activity %>%
+  group_by(interval, weektype) %>%
+  summarise(steps = mean(steps))
+
+```
+
+# Plotting the graph
+```{r}
+s <- ggplot(activity, aes(x=interval, y=steps, color = weektype)) +
+  geom_line() +
+  facet_wrap(~weektype, ncol = 1, nrow=2)
+print(s)
+```
+
+
+
